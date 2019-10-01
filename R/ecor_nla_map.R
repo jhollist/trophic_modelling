@@ -8,14 +8,16 @@
 #' 
 #' @examples
 #' devtools::install_github("jhollist/autocrop")
-#' devtools::install_github("USEPA/LakeTrophiModelling")
+#' devtools::install_github("USEPA/LakeTrophicModelling")
+#' library(LakeTrophicModelling)
 #' library(ggplot2)
 #' library(rgdal)
 #' library(plyr)
 #' library(maptools)
 #' library(viridis)
-#' library(autocrop)
-#'
+#' #library(autocrop)
+#' library(magick)
+#' 
 #' wsa9 <- readOGR(system.file("extdata",package="LakeTrophicModelling"),"wsa9_low48")
 #' wsa9 <- wsa9[!is.na(wsa9$WSA_9),]
 #' wsa9$WSA_9 <- c("Coastal\nPlains (CPL)","Northern\nAppalachians (NAP)", 
@@ -27,9 +29,11 @@
 #' p4s<-"+proj=aea +lat_1=29.5 +lat_2=45.5 +lat_0=37.5 +lon_0=-96 +x_0=0 +y_0=0 +ellps=GRS80 +datum=NAD83 +units=m +no_defs" 
 #' lakes_alb_sp<-SpatialPoints(coordinates(lakes_alb),proj4string=CRS(p4s))
 #' 
-#' ggsave(plot=ecor_nla_map(wsa9,lakes_alb_sp),filename="ecor_nla_map.jpg",width=8.5)
-#' autocrop("ecor_nla_map.jpg",10,"ecor_nla_map.jpg")
-#' 
+#' ggsave(plot=ecor_nla_map(wsa9,lakes_alb_sp),filename="ecor_nla_map.png",width=7.5, dpi = 400)
+#' #autocrop("ecor_nla_map.png",10,"ecor_nla_map.png")
+#' ecor_nla <- image_read("ecor_nla_map.png")
+#' ecor_nla <- image_trim(ecor_nla)
+#' image_write(ecor_nla, "ecor_nla_map_trim.png")
 #' @export
 #' @import ggplot2
 ecor_nla_map<-function(ecor,nla_pts){
@@ -43,10 +47,12 @@ ecor_nla_map<-function(ecor,nla_pts){
   nla_dd<-data.frame(coordinates(nla_dd))
   names(nla_dd)<-c("long","lat")
   gmap<-ggplot(ecor_df, aes(long,lat,group=group,fill=WSA_9)) +
+    #geom_polygon() +
     geom_polygon(data=subset(ecor_df,WSA_9!="Western\nMountains (WMT)")) +
     geom_polygon(data=subset(ecor_df,WSA_9=="Western\nMountains (WMT)")) +
     geom_path(color="lightgrey") +
-    geom_point(data = nla_dd, aes(x=long,y=lat,group="",fill=""),size=1.5) +
+    geom_point(data = nla_dd, aes(x=long,y=lat, group=NA, fill = NA),size=1.5,
+               color = "grey50", show.legend = FALSE) +
     coord_equal() +
     coord_map("albers", lat2 = 45.5, lat1 = 29.5)+
     theme(panel.background = element_rect(fill="white"), panel.grid = element_blank(),
@@ -56,8 +62,8 @@ ecor_nla_map<-function(ecor,nla_pts){
           legend.position = c(0.96,0.5),
           #legend.justification = c(0,0),
           legend.key.width = unit(0.5, "line"),
-          legend.key.height = unit(1.6, "line"),
-          legend.margin = unit(0,"line"),
+          legend.key.height = unit(1.9, "line"),
+          legend.spacing = unit(0,"line"),
           plot.margin = unit(c(1,3,0.5,0.5),"line")
     ) +
     ylab("") +
